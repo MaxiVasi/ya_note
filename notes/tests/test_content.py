@@ -44,6 +44,14 @@ class TestContentList(TestCase):
             slug=slugify(cls.TITLE) + '1',
         )
 
+    def test_notes_order(self):
+        """Проверка что запись есть на старнице записей."""
+        self.client.force_login(self.author)
+        list_urls = reverse('notes:list')
+        response = self.client.get(list_urls)
+        object_list = response.context['object_list']
+        self.assertIn(self.note, object_list)
+
     def test_notes_count(self):
         """Проверяем что на странице автора есть только 1 заметка!"""
         self.client.force_login(self.author)
