@@ -15,7 +15,7 @@ from pytils.translit import slugify
 User = get_user_model()
 
 
-class TestContentList(TestCase):
+class TestContent(TestCase):
     # Вынесем ссылку на домашнюю страницу в атрибуты класса.
     TITLE = 'Тестовое название заметки'
     TEXT = 'Тестовый текст заметки'
@@ -25,18 +25,13 @@ class TestContentList(TestCase):
     def setUpTestData(cls):
         """Создаем в базе - 2 записи от имени автора и автора_1."""
         cls.author = User.objects.create(username='user_author')
-        cls.user_client = Client()
-        cls.user_client.force_login(cls.author)
         cls.note = Note.objects.create(
             title=cls.TITLE,
             text=cls.TEXT,
             author=cls.author,
             slug=slugify(cls.TITLE),
         )
-        cls.detail_url = reverse('notes:edit', args=(cls.note.slug,))
         cls.author_1 = User.objects.create(username='user_author_1')
-        cls.user_client = Client()
-        cls.user_client.force_login(cls.author_1)
         cls.note_1 = Note.objects.create(
             title=cls.TITLE,
             text=cls.TEXT,
@@ -44,13 +39,21 @@ class TestContentList(TestCase):
             slug=slugify(cls.TITLE) + '1',
         )
 
-    def test_notes_order(self):
-        """Проверка что запись есть на старнице записей."""
+    def test_notes_creation_by_author(self):
+        """Проверка что запись автора есть на старнице записей автора."""
         self.client.force_login(self.author)
         list_urls = reverse('notes:list')
         response = self.client.get(list_urls)
         object_list = response.context['object_list']
         self.assertIn(self.note, object_list)
+
+    def test_notes_in_list_from_another_author(self):
+        """Проверка что запись автора_1 нет на старнице записей автора."""
+        self.client.force_login(self.author)
+        list_urls = reverse('notes:list')
+        response = self.client.get(list_urls)
+        object_list = response.context['object_list']
+        self.assertNotIn(self.note_1, object_list)
 
     def test_notes_count(self):
         """Проверяем что на странице автора есть только 1 заметка!"""
