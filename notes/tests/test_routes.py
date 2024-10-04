@@ -10,35 +10,24 @@
 # 5 - Страницы регистрации пользователей, входа в учётную запись и выхода из неё доступны всем пользователям.
 # Запуск тестов  python manage.py test notes.tests.test_routes -v 3
 
-from django.contrib.auth import get_user_model
-from django.test import TestCase
-from django.urls import reverse
 from http import HTTPStatus
 
-from notes.models import Note
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+
+from .fixture import BaseTestFixture
 
 User = get_user_model()
 
 
-class TestRoutes(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.reader = User.objects.create(username='user_reader')
-        cls.author = User.objects.create(username='user_author')
-        cls.note = Note.objects.create(
-            title='Тестовое название заметки',
-            text='Тестовый текст заметки',
-            author=cls.author,
-        )
-
+class TestRoutes(BaseTestFixture):
     def test_home_page(self):
-        url = reverse('notes:home')
-        response = self.client.get(url)
+        """Проверка доступа к главной странице для пользователя."""
+        response = self.client.get(self.HOME_URL)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    """Проверка доступа к страницам для неавторизированного пользователя."""
     def test_pages_availability(self):
+        """Проверка доступа к страницам для обычного пользователя."""
         urls = (
             ('notes:home', None),
             ('users:login', None),
@@ -51,8 +40,8 @@ class TestRoutes(TestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    """Проверка доступа к страницам для авторизированного пользователя."""
     def test_pages_availability_for_author(self):
+        """Проверка доступа к страницам для авторизированного пользователя."""
         urls = (
             ('notes:add', None),
             ('notes:list', None),
@@ -65,8 +54,8 @@ class TestRoutes(TestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    """Проверка доступа к страницам редактирования и удаления заметки."""
     def test_availability_for_notes_edit_and_delete(self):
+        """Проверка доступа к страницам редактирования и удаления заметки."""
         users_statuses = (
             (self.author, HTTPStatus.OK),
             (self.reader, HTTPStatus.NOT_FOUND),
@@ -79,27 +68,25 @@ class TestRoutes(TestCase):
                     response = self.client.get(url)
                     self.assertEqual(response.status_code, status)
 
-    """Проверка редиректов для анонимного пользователя."""
     def test_redirect_for_anonymous_client(self):
-        login_url = reverse('users:login')
+        """Проверка редиректов для анонимного пользователя."""
         for name in ('notes:detail',
                      'notes:edit',
                      'notes:delete'):
             with self.subTest(name=name):
                 url = reverse(name, args=(self.note.slug,))
-                redirect_url = f'{login_url}?next={url}'
+                redirect_url = f'{self.LOGIN_URL}?next={url}'
                 response = self.client.get(url)
                 self.assertRedirects(response, redirect_url)
 
-    """Проверка редиректов для анонимного пользователя."""
     def test_redirect_for_anonymous_client_other_pages(self):
-        login_url = reverse('users:login')
+        """Проверка редиректов для анонимного пользователя."""
         for name in ('notes:list',
                      'notes:add',
                      'notes:success',
                      ):
             with self.subTest(name=name):
                 url = reverse(name)
-                redirect_url = f'{login_url}?next={url}'
+                redirect_url = f'{self.LOGIN_URL}?next={url}'
                 response = self.client.get(url)
                 self.assertRedirects(response, redirect_url)
