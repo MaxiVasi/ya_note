@@ -9,13 +9,11 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
 from django.urls import reverse
 from pytils.translit import slugify
 
 from .fixture import BaseTestFixture
 from notes.models import Note
-from notes.forms import NoteForm
 
 User = get_user_model()
 
@@ -48,6 +46,8 @@ class TestNotesCreation(BaseTestFixture):
         edit_url = reverse('notes:edit', args=(self.note_1.slug,))
         response = self.author_client.get(edit_url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertEqual(self.note_1.title, self.TITLE)
+        self.assertEqual(self.note_1.text, self.TEXT)
 
     def test_author_cant_delete_note_of_another_user(self):
         """Пользователь author не может удалить запись author_1->"""
@@ -63,8 +63,9 @@ class TestNotesCreation(BaseTestFixture):
         edit_url = reverse('notes:edit', args=(self.note.slug,))
         response = self.author_client.post(edit_url, data=self.newtextdata)
         self.assertRedirects(response, self.SUCCESS_URL)
-        self.note.refresh_from_db()
-        self.assertEqual(self.note.text, self.NEW_TEXT)
+        note = Note.objects.get(slug=self.note.slug)
+        self.assertEqual(note.title, self.newtextdata['title'])
+        self.assertEqual(note.text, self.newtextdata['text'])
 
     def test_author_can_delete_note(self):
         """Пользователь author может удалить свою запись->"""
@@ -76,9 +77,13 @@ class TestNotesCreation(BaseTestFixture):
         self.assertEqual(notes_count_before, note_count + 1)
 
     def test_creation_two_notes_with_one_slug(self):
+        """Невозможно создать две заметки с одинаковым slug->"""
         notes_count_before = Note.objects.count()
         current_slug = Note.objects.last().slug
         newdata = {'title': 'Новый', 'text': 'Текст', 'slug': current_slug}
         self.author_client.post(self.ADD_URL, data=newdata)
         notes_count = Note.objects.count()
         self.assertEqual(notes_count_before, notes_count)
+        response = self.author_client.post(self.ADD_URL, data=newdata)
+        self.assertFormError(
+            response, 'form', 'slug', errors=(current_slug + self.WARNING))

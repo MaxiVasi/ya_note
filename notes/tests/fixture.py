@@ -20,6 +20,8 @@ class BaseTestFixture(TestCase):
     LOGIN_URL = reverse('users:login')
     ADD_URL = reverse('notes:add')
     SUCCESS_URL = reverse('notes:success')
+    LIST_URL = reverse('notes:list')
+    WARNING = ' - такой slug уже существует, придумайте уникальное значение!'
 
     @classmethod
     def setUpTestData(cls):
