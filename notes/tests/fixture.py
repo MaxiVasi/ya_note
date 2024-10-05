@@ -1,9 +1,7 @@
-from http import HTTPStatus
-from pytils.translit import slugify
-
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
+from pytils.translit import slugify
 
 from notes.models import Note
 
