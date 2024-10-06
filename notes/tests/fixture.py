@@ -16,10 +16,14 @@ class BaseTestFixture(TestCase):
     ADD_URL = reverse('notes:add')
     HOME_URL = reverse('notes:home')
     LOGIN_URL = reverse('users:login')
+    LOGOUT_URL = reverse('users:logout')
+    SIGNUP_URL = reverse('users:signup')
     ADD_URL = reverse('notes:add')
     SUCCESS_URL = reverse('notes:success')
     LIST_URL = reverse('notes:list')
-    WARNING = ' - такой slug уже существует, придумайте уникальное значение!'
+    #DETAIL_URL = reverse('notes:detail')
+    #EDIT_URL = reverse('notes:edit')
+    #DELETE_URL = reverse('notes:delete')
 
     @classmethod
     def setUpTestData(cls):

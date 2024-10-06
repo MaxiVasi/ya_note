@@ -15,7 +15,7 @@ from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from .fixture import BaseTestFixture
+from notes.tests.fixture import BaseTestFixture
 
 User = get_user_model()
 
@@ -29,43 +29,39 @@ class TestRoutes(BaseTestFixture):
     def test_pages_availability(self):
         """Проверка доступа к страницам для обычного пользователя."""
         urls = (
-            ('notes:home', None),
-            ('users:login', None),
-            ('users:logout', None),
-            ('users:signup', None),
+            (self.HOME_URL),
+            (self.LOGIN_URL),
+            (self.LOGOUT_URL),
+            (self.SIGNUP_URL),
         )
-        for name, args in urls:
+        for name in urls:
             with self.subTest(name=name):
-                url = reverse(name, args=args)
-                response = self.client.get(url)
+                response = self.client.get(name)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_pages_availability_for_author(self):
         """Проверка доступа к страницам для авторизированного пользователя."""
         urls = (
-            ('notes:add', None),
-            ('notes:list', None),
-            ('notes:success', None),
+            (self.ADD_URL),
+            (self.LIST_URL),
+            (self.SUCCESS_URL),
         )
-        self.client.force_login(self.author)
-        for name, args in urls:
+        for name in urls:
             with self.subTest(user=self.author, name=name):
-                url = reverse(name, args=args)
-                response = self.client.get(url)
+                response = self.author_client.get(name)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_availability_for_notes_edit_and_delete(self):
         """Проверка доступа к страницам редактирования и удаления заметки."""
         users_statuses = (
-            (self.author, HTTPStatus.OK),
-            (self.reader, HTTPStatus.NOT_FOUND),
+            (self.author_client, HTTPStatus.OK),
+            (self.reader_client, HTTPStatus.NOT_FOUND),
         )
         for user, status in users_statuses:
-            self.client.force_login(user)
             for name in ('notes:detail', 'notes:edit', 'notes:delete'):
                 with self.subTest(user=user, name=name):
                     url = reverse(name, args=(self.note.slug,))
-                    response = self.client.get(url)
+                    response = user.get(url)
                     self.assertEqual(response.status_code, status)
 
     def test_redirect_for_anonymous_client(self):
@@ -81,12 +77,11 @@ class TestRoutes(BaseTestFixture):
 
     def test_redirect_for_anonymous_client_other_pages(self):
         """Проверка редиректов для анонимного пользователя."""
-        for name in ('notes:list',
-                     'notes:add',
-                     'notes:success',
+        for name in (self.LIST_URL,
+                     self.ADD_URL,
+                     self.SUCCESS_URL,
                      ):
             with self.subTest(name=name):
-                url = reverse(name)
-                redirect_url = f'{self.LOGIN_URL}?next={url}'
-                response = self.client.get(url)
+                redirect_url = f'{self.LOGIN_URL}?next={name}'
+                response = self.client.get(name)
                 self.assertRedirects(response, redirect_url)

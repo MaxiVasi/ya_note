@@ -12,7 +12,8 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from pytils.translit import slugify
 
-from .fixture import BaseTestFixture
+from notes.tests.fixture import BaseTestFixture
+from notes.forms import WARNING
 from notes.models import Note
 
 User = get_user_model()
@@ -86,4 +87,4 @@ class TestNotesCreation(BaseTestFixture):
         self.assertEqual(notes_count_before, notes_count)
         response = self.author_client.post(self.ADD_URL, data=newdata)
         self.assertFormError(
-            response, 'form', 'slug', errors=(current_slug + self.WARNING))
+            response, 'form', 'slug', errors=(current_slug + WARNING))

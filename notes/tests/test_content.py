@@ -6,7 +6,7 @@
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from .fixture import BaseTestFixture
+from notes.tests.fixture import BaseTestFixture
 from notes.forms import NoteForm
 
 User = get_user_model()
