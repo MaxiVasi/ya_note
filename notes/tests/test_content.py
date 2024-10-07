@@ -3,13 +3,10 @@
 # В список заметок одного пользователя не попадают заметки другого пользователя;
 # На страницы создания и редактирования заметки передаются формы.
 
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from notes.tests.fixture import BaseTestFixture
 from notes.forms import NoteForm
-
-User = get_user_model()
 
 
 class TestContent(BaseTestFixture):
