@@ -8,15 +8,12 @@
 
 from http import HTTPStatus
 
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 from pytils.translit import slugify
 
 from notes.tests.fixture import BaseTestFixture
 from notes.forms import WARNING
 from notes.models import Note
-
-User = get_user_model()
 
 
 class TestNotesCreation(BaseTestFixture):
@@ -44,16 +41,19 @@ class TestNotesCreation(BaseTestFixture):
 
     def test_author_cant_edit_note_of_another_user(self):
         """Пользователь author не может редактировать чужую запись->"""
-        edit_url = reverse('notes:edit', args=(self.note_1.slug,))
-        response = self.author_client.get(edit_url)
+        edit_url = reverse(self.EDITS_URL, args=(self.note_1.slug,))
+        response = self.author_client.post(edit_url, data=self.newtextdata)
+        note_after = Note.objects.get(slug=self.note_1.slug)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        self.assertEqual(self.note_1.title, self.TITLE)
-        self.assertEqual(self.note_1.text, self.TEXT)
+        self.assertEqual(self.note_1.title, note_after.title)
+        self.assertEqual(self.note_1.text, note_after.text)
+        self.assertEqual(self.note_1.author, note_after.author)
+        self.assertEqual(self.note_1.slug, slugify(self.TITLE) + '1')
 
     def test_author_cant_delete_note_of_another_user(self):
         """Пользователь author не может удалить запись author_1->"""
         notes_count_before = Note.objects.count()
-        delete_url = reverse('notes:delete', args=(self.note_1.slug,))
+        delete_url = reverse(self.DELETES_URL, args=(self.note_1.slug,))
         response = self.author_client.delete(delete_url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         note_count = Note.objects.count()
@@ -61,17 +61,18 @@ class TestNotesCreation(BaseTestFixture):
 
     def test_author_can_edit_note(self):
         """Пользователь author может редактировать свою запись->"""
-        edit_url = reverse('notes:edit', args=(self.note.slug,))
+        edit_url = reverse(self.EDITS_URL, args=(self.note.slug,))
         response = self.author_client.post(edit_url, data=self.newtextdata)
         self.assertRedirects(response, self.SUCCESS_URL)
-        note = Note.objects.get(slug=self.note.slug)
+        note = Note.objects.get(id=self.note.id)
         self.assertEqual(note.title, self.newtextdata['title'])
         self.assertEqual(note.text, self.newtextdata['text'])
+        self.assertEqual(note.author, self.newtextdata['author'])
 
     def test_author_can_delete_note(self):
         """Пользователь author может удалить свою запись->"""
         notes_count_before = Note.objects.count()
-        delete_url = reverse('notes:delete', args=(self.note.slug,))
+        delete_url = reverse(self.DELETES_URL, args=(self.note.slug,))
         response = self.author_client.delete(delete_url)
         self.assertRedirects(response, self.SUCCESS_URL)
         note_count = Note.objects.count()
@@ -87,4 +88,4 @@ class TestNotesCreation(BaseTestFixture):
         self.assertEqual(notes_count_before, notes_count)
         response = self.author_client.post(self.ADD_URL, data=newdata)
         self.assertFormError(
-            response, 'form', 'slug', errors=(current_slug + WARNING))
+            response, 'form', 'slug', errors=(newdata['slug'] + WARNING))

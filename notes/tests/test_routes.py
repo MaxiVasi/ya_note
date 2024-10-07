@@ -58,7 +58,7 @@ class TestRoutes(BaseTestFixture):
             (self.reader_client, HTTPStatus.NOT_FOUND),
         )
         for user, status in users_statuses:
-            for name in ('notes:detail', 'notes:edit', 'notes:delete'):
+            for name in (self.DETAILS_URL, self.EDITS_URL, self.DELETES_URL):
                 with self.subTest(user=user, name=name):
                     url = reverse(name, args=(self.note.slug,))
                     response = user.get(url)
@@ -66,9 +66,7 @@ class TestRoutes(BaseTestFixture):
 
     def test_redirect_for_anonymous_client(self):
         """Проверка редиректов для анонимного пользователя."""
-        for name in ('notes:detail',
-                     'notes:edit',
-                     'notes:delete'):
+        for name in (self.DETAILS_URL, self.EDITS_URL, self.DELETES_URL):
             with self.subTest(name=name):
                 url = reverse(name, args=(self.note.slug,))
                 redirect_url = f'{self.LOGIN_URL}?next={url}'
@@ -77,10 +75,7 @@ class TestRoutes(BaseTestFixture):
 
     def test_redirect_for_anonymous_client_other_pages(self):
         """Проверка редиректов для анонимного пользователя."""
-        for name in (self.LIST_URL,
-                     self.ADD_URL,
-                     self.SUCCESS_URL,
-                     ):
+        for name in (self.LIST_URL, self.ADD_URL, self.SUCCESS_URL):
             with self.subTest(name=name):
                 redirect_url = f'{self.LOGIN_URL}?next={name}'
                 response = self.client.get(name)

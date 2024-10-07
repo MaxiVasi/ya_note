@@ -21,18 +21,19 @@ class BaseTestFixture(TestCase):
     ADD_URL = reverse('notes:add')
     SUCCESS_URL = reverse('notes:success')
     LIST_URL = reverse('notes:list')
-    #DETAIL_URL = reverse('notes:detail')
-    #EDIT_URL = reverse('notes:edit')
-    #DELETE_URL = reverse('notes:delete')
+    DETAILS_URL = 'notes:detail'
+    EDITS_URL = 'notes:edit'
+    DELETES_URL = 'notes:delete'
 
     @classmethod
     def setUpTestData(cls):
         cls.data = {'title': 'Новый', 'text': 'Текст'}
-        cls.newtextdata = {'title': cls.TITLE, 'text': cls.NEW_TEXT}
         cls.reader = User.objects.create(username='user_reader')
         cls.reader_client = Client()
         cls.reader_client.force_login(cls.reader)
         cls.author = User.objects.create(username='user_author')
+        cls.newtextdata = {'title': cls.TITLE,
+                           'text': cls.NEW_TEXT, 'author': cls.author}
         cls.author_client = Client()
         cls.author_client.force_login(cls.author)
         cls.note = Note.objects.create(
